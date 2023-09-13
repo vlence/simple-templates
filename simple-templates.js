@@ -168,10 +168,28 @@ class Template {
     }
 }
 
+/**
+ * Takes a string and generates a list of tokens lazily.
+ * 
+ * The tokens represent strings, expression blocks and template
+ * blocks.
+ * 
+ * @example
+ * ```javascript
+ * const {Tokenizer} = require('@vlence/simple-templates')
+ * 
+ * const templateString = 'hello {{name}}!'
+ * const tokenizer = new Tokenizer(templateString)
+ * 
+ * while (tokenizer.hasMoreTokens()) {
+ *     tokenizer.getNextToken()
+ * }
+ * ```
+ */
 class Tokenizer {
     /**
      * 
-     * @param {string} s 
+     * @param {string} s The string to tokenize 
      */
     constructor(s) {
         this._string = s
