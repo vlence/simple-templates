@@ -30,6 +30,7 @@ class Template {
     }
 
     /**
+     * Add string to this template's rendering pipeline.
      * 
      * @param {string} s 
      */
@@ -38,6 +39,7 @@ class Template {
     }
 
     /**
+     * Add expression to this template's rendering pipeline.
      * 
      * @param {string} e The name of the expression
      */
@@ -46,6 +48,7 @@ class Template {
     }
 
     /**
+     * Add template to this template's rendering pipeline.
      * 
      * @param {Template} t A template
      */
@@ -58,10 +61,12 @@ class Template {
     /**
      * Render this template. You can optionally provide a context.
      * 
+     * If you pass in a string as the first argument 
+     * 
      * `undefined` and `null` are not rendered.
      * 
+     * @param {string|any} name Name of an inner template
      * @param {any} context The context for this render
-     * @param {string} name Name of an inner template
      * 
      * @throws Will throw if an inner template with the given name can't be found.
      * 
@@ -105,6 +110,7 @@ class Template {
     }
 
     /**
+     * Render this template with the given context.
      * 
      * @param {any} context The rendering context
      * @returns {string}
