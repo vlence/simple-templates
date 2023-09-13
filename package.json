@@ -1,6 +1,6 @@
 {
     "name": "@vlence/simple-templates",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "description": "A simple templating library. Make small templates, combine them, reach inside larger templates.",
     "main": "simple-templates.js",
     "scripts": {
@@ -8,5 +8,9 @@
     },
     "keywords": [],
     "author": "Victor Basumatary <vlenceleuth@gmail.com>",
-    "license": "ISC"
+    "license": "ISC",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/vlence/simple-templates.git"
+    }
 }
