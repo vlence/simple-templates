@@ -44,6 +44,11 @@ assert.equal(template.render(), ' Outer  Inner  Outer ')
 assert.equal(template.render('OuterTemplate'), ' Outer  Inner  Outer ')
 assert.equal(template.render('InnerTemplate'), ' Inner ')
 
+template = compile('{{template ONE}}one{{/template}} {{template TWO}}two{{/template}}')
+assert.equal(template.render(), 'one two')
+assert.equal(template.render('ONE'), 'one')
+assert.equal(template.render('TWO'), 'two')
+
 
 
 // putting it all together

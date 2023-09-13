@@ -207,11 +207,18 @@ class Tokenizer {
 
         const string = this._string.slice(this._cursor)
 
-        // inner template
-        const matchedTemplate = /^{{template\s+([_a-zA-Z][_a-zA-Z0-9]*)\s*}}(.*){{\/template}}/.exec(string)
-        if (matchedTemplate !== null) {
-            this._cursor += matchedTemplate[0].length
-            return {type: 'Template', value: matchedTemplate[1], body: matchedTemplate[2]}
+        // template block start
+        const matchedStart = /^{{template\s+([_a-zA-Z][_a-zA-Z0-9]*)}}/.exec(string)
+        if (matchedStart !== null) {
+            this._cursor += matchedStart[0].length
+            return {type: 'TemplateStart', value: matchedStart[1]}
+        }
+
+        // template block stop
+        const matchedStop = /^{{\/template}}/.exec(string)
+        if (matchedStop !== null) {
+            this._cursor += matchedStop[0].length
+            return {type: 'TemplateStop', value: matchedStop[1]}
         }
 
         // expressions: {{ ... }}
@@ -249,27 +256,39 @@ class Tokenizer {
  */
 function compile(s) {
     const tokenizer = new Tokenizer(s)
-    const template = new Template()
+    const template_stack = [new Template()]
 
     while (tokenizer.hasMoreTokens()) {
+        let current_template = template_stack[template_stack.length - 1]
         const token = tokenizer.getNextToken()
 
         switch (token.type) {
-            case 'Template':
-                const innerTemplate = compile(token.body)
-                innerTemplate.name = token.value
-                template.add_template(innerTemplate)
-                break
             case 'String':
-                template.add_string(token.value)
+                current_template.add_string(token.value)
                 break
             case 'Expression':
-                template.add_expression(token.value)
+                current_template.add_expression(token.value)
+                break
+            case 'TemplateStart':
+                const new_template = new Template(token.value)
+                current_template.add_template(new_template)
+                template_stack.push(new_template)
+                break
+            case 'TemplateStop':
+                if (template_stack.length == 1) {
+                    throw new SyntaxError('Found unexpected {{/template}}')
+                }
+
+                template_stack.pop()
                 break
         }
     }
 
-    return template
+    if (template_stack.length != 1) {
+        throw new SyntaxError('Missing one or more {{/template}}')
+    }
+
+    return template_stack[0]
 }
 
 module.exports = {
