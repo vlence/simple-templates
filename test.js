@@ -35,6 +35,7 @@ assert.throws(() => compile(`invalid expression {{template}}`))
 assert.throws(() => compile(`invalid expression {{template Invalid}}`))
 assert.throws(() => compile(`invalid expression {{/template}}`))
 assert.throws(() => compile(`invalid expression {{template}} {{/template}}`))
+assert.throws(() => compile('invalid expression {{template BLOCK}}{{/template}}{{/template}}'))
 
 
 
