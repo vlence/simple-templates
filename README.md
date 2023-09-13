@@ -10,21 +10,23 @@ $ npm install @vlence/simple-templates
 
 ## Usage
 
+WARNING: Simple Templates does NOT sanitize your inputs. Sanitizing your inputs is your responsibility.
+
 ### Basic usage
 
 ```javascript
 const {compile, Template} = require('@vlence/simple-templates')
 
-const templateString = 'hello {{name}}!'
-const template = compile(templateString)
+const template_str = 'hello {{name}}!'
+const template = compile(template_str)
 console.log(template.render({name: 'world'})) // hello world!
 
 // same as above but imperative
-const imperativeTemplate = new Template()
-imperativeTemplate.add_string('hello ')
-imperativeTemplate.add_expression('name')
-imperativeTemplate.add_string('!')
-console.log(imperativeTemplate.render({name: 'world'})) // hello world!
+const imperative_template = new Template()
+imperative_template.add_string('hello ')
+imperative_template.add_expression('name')
+imperative_template.add_string('!')
+console.log(imperative_template.render({name: 'world'})) // hello world!
 ```
 
 Expression blocks look like `{{ expression }}`. `expression` must contain only alphanumeric characters and _, and may not start with a digit.
@@ -55,13 +57,77 @@ Invalid:
 
 ```javascript
 const fs = require('fs')
-const {compile} = require('@vlence/simple-templates')
+const {compile, Template} = require('@vlence/simple-templates')
 
 const template = compile(fs.readFileSync('form.html'))
 console.log(template.render()) // <form> ... </form>
 console.log(template.render('UsernameInput')) // <input ... />
+
+// The above could be done programmatically too
+const outer = new Template()
+const inner = new Template('UsernameInput')
+
+inner.add_string('<input ... />')
+
+outer.add_string('<form> ...')
+outer.add_template(inner)
+outer.add_string('... </form>')
+
+console.log(outer.render()) // <form> ... </form>
+console.log(outer.render('UsernameInput')) // <input ... />
 ```
 
 Template blocks look like `{{template TemplateName}} ... {{/template}}`. Just like expression blocks `TemplateName` must contain only alphanumeric characters and _, and may not start with a digit.
 
-Use template blocks to isolate portions of a template. This is useful when you want to render only a part of a template instead of the whole. This approach may be nicer compared
+Use template blocks to isolate portions of a template. This is useful when you want to render only a part of a template instead of the whole. This approach may be nicer compared to having many smaller templates and combining them manually. For example, you're using htmx and you perform input validation on the server. Instead of having multiple templates for each form field you can have one template with the complete form and render just the field being validated.
+
+### Example with Express
+
+```html
+<!-- templates/layout.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Templates Example</title>
+</head>
+<body>
+    {{ body }}
+</body>
+</html>
+```
+
+```html
+<!-- templates/home.html -->
+<h1>It works!</h1>
+```
+
+```javascript
+// server.js
+const fs = require('fs')
+const express = require('express')
+const {compile} = require('@vlence/simple-templates')
+
+const layout_template = compile(fs.readFileSync('templates/layout.html').toString())
+const home_template = compile(fs.readFileSync('templates/home.html').toString())
+
+const app = express()
+
+app.use(function (req, res) {
+    res.setHeader('content-type', 'text/html')
+    res.send(layout_template.render({
+        body: home_template.render()
+    }))
+})
+
+app.listen(8080, function (err) {
+    if (err) {
+        console.error('Failed to start server at 127.0.0.1:8080')
+        console.error(err)
+        process.exit(1)
+    }
+
+    console.log('Listening at 127.0.0.1:8080')
+})
+```

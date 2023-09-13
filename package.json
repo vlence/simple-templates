@@ -1,6 +1,6 @@
 {
     "name": "@vlence/simple-templates",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "description": "A simple templating library. Make small templates, combine them, reach inside larger templates.",
     "main": "simple-templates.js",
     "scripts": {
