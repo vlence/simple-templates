@@ -79,37 +79,22 @@ class Template {
     }
 
     /**
-     * Render this template. You can optionally provide a context.
-     * 
-     * If you pass in a string as the first argument 
+     * Render this template with the given context.
      * 
      * `undefined` and `null` are not rendered.
      * 
-     * @param {string|any} name Name of an inner template
      * @param {any} context The context for this render
-     * 
-     * @throws Will throw if an inner template with the given name can't be found.
      * 
      * @returns {string} The rendered template.
      */
-    render(name, context = {}) {
-        const nameIsUndefinedOrNull = name === undefined || name === null
-        const nameIsNotString = typeof name !== 'string'
-        const contextIsUndefinedOrNull = context === undefined || context === null
-
-        if (contextIsUndefinedOrNull) {
-            context = {}
-        }
+    render(context = {}) {
+        let output = ''
         
-        if (nameIsUndefinedOrNull) {
-            return this._render(context)
+        for (const token of this._tokens) {
+            output += this._render_token(token, context)
         }
-        else if (nameIsNotString) {
-            return this._render(name)
-        }
-        else {
-            return this._render_template(name, context)
-        }
+
+        return output
     }
 
     /**
@@ -290,46 +275,9 @@ class Template {
                 if (template) {
                     return template.render(context)
                 }
+
+                return ''
         }
-    }
-
-    /**
-     * Render the template with the given name.
-     * 
-     * @private
-     * 
-     * @param {string} name The name of the template
-     * @param {any} context The rendering context
-     * 
-     * @returns {string} The rendered template
-     */
-    _render_template(name, context) {
-        const template = this._find(name)
-
-        if (template) {
-            return template.render(context)
-        }
-
-        throw new Error('Cannot find inner template with name ' + name)
-    }
-
-    /**
-     * Render this template with the given context.
-     * 
-     * @private
-     * 
-     * @param {any} context The rendering context
-     * 
-     * @returns {string} The rendered template
-     */
-    _render(context) {
-        let output = ''
-        
-        for (const token of this._tokens) {
-            output += this._render_token(token, context)
-        }
-
-        return output
     }
 
     /**
