@@ -57,9 +57,9 @@ Invalid:
 <!-- form.html -->
 <form action="/login" method="post">
     <label for="username">Username:</label>
-    {{template UsernameInput}}
+    {{t UsernameInput}}
         <input type="text" id="username" name="username" required autofocus />
-    {{/template}}
+    {{/t}}
 
     <button type="submit">Login</button>
 </form>
@@ -87,7 +87,7 @@ console.log(outer.render()) // <form> ... </form>
 console.log(outer.render('UsernameInput')) // <input ... />
 ```
 
-Template blocks look like `{{template TemplateName}} ... {{/template}}`. Just like expression blocks `TemplateName` must contain only alphanumeric characters and _, and may not start with a digit.
+Template blocks look like `{{t TemplateName}} ... {{/t}}`. Just like expression blocks `TemplateName` must contain only alphanumeric characters and _, and may not start with a digit.
 
 Use template blocks to isolate portions of a template. This is useful when you want to render only a part of a template instead of the whole. This approach may be nicer compared to having many smaller templates and combining them manually. For example, you're using htmx and you perform input validation on the server. Instead of having multiple templates for each form field you can have one template with the complete form and render just the field being validated.
 
@@ -100,8 +100,8 @@ Let's explore this. Consider the following template.
 
 ```javascript
 const templateString = `Outside.
-{{template greeting_generic}}hello!{{/template}}
-{{template greeting_personalized}}hello {{name}}!{{/template}}.`
+{{t greeting_generic}}hello!{{/t}}
+{{t greeting_personalized}}hello {{name}}!{{/t}}.`
 
 const template = compile(templateString)
 ```

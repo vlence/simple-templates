@@ -106,8 +106,8 @@ class Template {
      * This is outside all other templates. Notice this text never gets rendered
      * when you use only().
      * 
-     * {{template greeting_generic}} hello! {{/template}}
-     * {{template greeting_personalized}} hello {{name}}! {{/template}}
+     * {{t greeting_generic}} hello! {{/t}}
+     * {{t greeting_personalized}} hello {{name}}! {{/t}}
      * `
      * 
      * const template = compile(templateString)
@@ -157,8 +157,8 @@ class Template {
      * This is outside all other templates. Notice this text never gets rendered
      * when you use only().
      * 
-     * {{template greeting_generic}} hello! {{/template}}
-     * {{template greeting_personalized}} hello {{name}}! {{/template}}
+     * {{t greeting_generic}} hello! {{/t}}
+     * {{t greeting_personalized}} hello {{name}}! {{/t}}
      * `
      * 
      * const template = compile(templateString)
@@ -354,14 +354,14 @@ class Tokenizer {
         const string = this._string.slice(this._cursor)
 
         // template block start
-        const matchedStart = /^{{template\s+([_a-zA-Z][_a-zA-Z0-9]*)}}/.exec(string)
+        const matchedStart = /^{{t\s+([_a-zA-Z][_a-zA-Z0-9]*)}}/.exec(string)
         if (matchedStart !== null) {
             this._cursor += matchedStart[0].length
             return {type: 'TemplateStart', value: matchedStart[1]}
         }
 
         // template block stop
-        const matchedStop = /^{{\/template}}/.exec(string)
+        const matchedStop = /^{{\/t}}/.exec(string)
         if (matchedStop !== null) {
             this._cursor += matchedStop[0].length
             return {type: 'TemplateStop', value: matchedStop[1]}
@@ -369,7 +369,7 @@ class Tokenizer {
 
         // expressions: {{ ... }}
         const matchedExpression = /^{{\s*([_a-zA-Z][_a-zA-Z0-9]*)\s*}}/.exec(string)
-        if (matchedExpression !== null && !string.startsWith('{{template')) {
+        if (matchedExpression !== null && !string.startsWith('{{t')) {
             this._cursor += matchedExpression[0].length
             return {type: 'Expression', value: matchedExpression[1].trim()}
         }
@@ -377,7 +377,7 @@ class Tokenizer {
         // not an expression and not a template
         const matchedInvalidBlock = /^({{.*}})/.exec(string)
         if (matchedInvalidBlock !== null) {
-            throw new SyntaxError(`Expected {{ expression }} or {{template TemplateName}} ... {{/template}} but got ` + matchedInvalidBlock[1])
+            throw new SyntaxError(`Expected {{ expression }} or {{t TemplateName}} ... {{/t}} but got ` + matchedInvalidBlock[1])
         }
 
         // plain strings
@@ -422,7 +422,7 @@ function compile(s) {
                 break
             case 'TemplateStop':
                 if (template_stack.length == 1) {
-                    throw new SyntaxError('Found unexpected {{/template}}')
+                    throw new SyntaxError('Found unexpected {{/t}}')
                 }
 
                 template_stack.pop()
@@ -431,7 +431,7 @@ function compile(s) {
     }
 
     if (template_stack.length != 1) {
-        throw new SyntaxError('Missing one or more {{/template}}')
+        throw new SyntaxError('Missing one or more {{/t}}')
     }
 
     return template_stack[0]
