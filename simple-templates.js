@@ -132,20 +132,25 @@ class Template {
      * console.log(template.only('greeting_generic', {name: 'greeting_personalized', context: {name: 'world'}})) // hello! hello world!
      * ```
      * 
-     * @param {(string|TemplateArgument)[]} list The list of templates to render
+     * @param {string|(string|TemplateArgument)[]} nameOrList The list of templates to render
+     * @param {any} context The rendering context. This is used only if the first argument is a string.
      * 
      * @returns {string} The rendered templates
      */
-    only(...list) {
+    only(nameOrList, context = {}) {
         let output = ''
+        const isList = Array.isArray(nameOrList)
 
-        if (list.length == 0) {
+        if (isList && nameOrList.length == 0) {
             return output
         }
 
+        if (!isList) {
+            return this._render_token({type: 'Template', value: nameOrList}, context)
+        }
 
         for (const t of this._templates_list) {
-            for (const item of list) {
+            for (const item of nameOrList) {
                 const itemType = typeof item == 'string' ? 'string' : 'TemplateArgument'
                 const name = itemType == 'string' ? item : item.name
 

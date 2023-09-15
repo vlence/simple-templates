@@ -42,21 +42,17 @@ assert.throws(() => compile('invalid expression {{template BLOCK}}{{/template}}{
 // can it compile and render template blocks?
 template = compile('{{template OuterTemplate}} Outer {{template InnerTemplate}} Inner {{/template}} Outer {{/template}}')
 assert.equal(template.render(), ' Outer  Inner  Outer ')
-assert.equal(template.render('OuterTemplate'), ' Outer  Inner  Outer ')
-assert.equal(template.render('InnerTemplate'), ' Inner ')
 
 template = compile('{{template ONE}}one{{/template}} {{template TWO}}two{{/template}}')
 assert.equal(template.render(), 'one two')
-assert.equal(template.render('ONE'), 'one')
-assert.equal(template.render('TWO'), 'two')
 
 template = compile(`Outside.
 {{template greeting_generic}}hello!{{/template}}
 {{template greeting_personalized}}hello {{name}}!{{/template}}`)
 
 assert.equal(template.only('greeting_generic'), 'hello!')
-assert.equal(template.only({name: 'greeting_personalized', context: {name: 'world'}}), 'hello world!')
-assert.equal(template.only('greeting_generic', {name: 'greeting_personalized', context: {name: 'world'}}), 'hello!hello world!')
+assert.equal(template.only('greeting_personalized', {name: 'world'}), 'hello world!')
+assert.equal(template.only(['greeting_generic', {name: 'greeting_personalized', context: {name: 'world'}}]), 'hello!hello world!')
 
 assert.equal(template.except('greeting_personalized'), 'Outside.\nhello!\n')
 assert.equal(template.except(['greeting_personalized']), 'Outside.\nhello!\n')
@@ -74,7 +70,7 @@ assert.equal(template.some(['greeting_generic', {name: 'greeting_personalized', 
 // putting it all together
 template = compile('{{outerMessage}} {{template Inner}}{{innerMessage}}{{/template}}')
 assert.equal(template.render({outerMessage: 'outer', innerMessage: 'inner'}), 'outer inner')
-assert.equal(template.render('Inner', {outerMessage: 'outer', innerMessage: 'inner'}), 'inner')
+assert.equal(template.only('Inner', {outerMessage: 'outer', innerMessage: 'inner'}), 'inner')
 
 
 

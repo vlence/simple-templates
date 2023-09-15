@@ -110,8 +110,8 @@ Using `only()` we can render some templates and nothing else.
 
 ```javascript
 template.only('greeting_generic') // 'hello!'
-template.only({name: 'greeting_personalized', context: {name: 'world'}}) // 'hello world!'
-template.only('greeting_generic', {name: 'greeting_personalized', context: {name: 'world'}}) // 'hello!hello world!'
+template.only('greeting_personalized', {name: 'world'}) // 'hello world!'
+template.only(['greeting_generic', {name: 'greeting_personalized', context: {name: 'world'}}]) // 'hello!hello world!'
 ```
 
 `except()` works a little bit like a blacklist. All content OUTSIDE the templates specified will also be rendered. 
