@@ -2,17 +2,26 @@
 
 JavaScript is a scripting language and a Turing-complete one to boot. We don't really need logic inside our templates to make them useful; you can already do that with JavaScript. What we really need is a simple way to express our templates and the ability to build larger templates from smaller ones or reach into smaller sections of larger templates.
 
+
+
+
+
 ## Installation
 
 ```console
 $ npm install @vlence/simple-templates
 ```
 
+
+
+
+
 ## Usage
 
 WARNING: Simple Templates does NOT sanitize your inputs. Sanitizing your inputs is your responsibility.
 
-### Basic usage
+
+### Expression blocks
 
 ```javascript
 const {compile, Template} = require('@vlence/simple-templates')
@@ -41,7 +50,8 @@ Invalid:
 - `{{ 123no }}`
 - `{{ }}`
 
-### Nested templates
+
+### Template blocks
 
 ```html
 <!-- form.html -->
@@ -81,7 +91,57 @@ Template blocks look like `{{template TemplateName}} ... {{/template}}`. Just li
 
 Use template blocks to isolate portions of a template. This is useful when you want to render only a part of a template instead of the whole. This approach may be nicer compared to having many smaller templates and combining them manually. For example, you're using htmx and you perform input validation on the server. Instead of having multiple templates for each form field you can have one template with the complete form and render just the field being validated.
 
-### Example with Express
+
+#### `only()`, `except()`, `some()`
+
+There are situations where we don't want to render an entire template but rather just a portion of it. To achieve this we can mark these sections using template blocks and render them conditionally.
+
+Let's explore this. Consider the following template.
+
+```javascript
+const templateString = `Outside.
+{{template greeting_generic}}hello!{{/template}}
+{{template greeting_personalized}}hello {{name}}!{{/template}}.`
+
+const template = compile(templateString)
+```
+
+Using `only()` we can render some templates and nothing else.
+
+```javascript
+template.only('greeting_generic') // 'hello!'
+template.only({name: 'greeting_personalized', context: {name: 'world'}}) // 'hello world!'
+template.only('greeting_generic', {name: 'greeting_personalized', context: {name: 'world'}}) // 'hello!hello world!'
+```
+
+`except()` works a little bit like a blacklist. All content OUTSIDE the templates specified will also be rendered. 
+
+```javascript
+template.except('greeting_personalized') // 'Outside.\nhello!\n'
+template.except(['greeting_personalized']) // 'Outside.\nhello!\n'
+template.except(['greeting_personalized', 'greeting_generic']) // 'Outside.\n\n'
+template.except('greeting_generic', {name: 'world'}) // 'Outside.\n\nhello world!'
+template.except(['greeting_generic'], {name: 'world'}) // 'Outside.\n\nhello world!'
+```
+
+`some()` works like the opposite of `except()`.
+
+```javascript
+template.some('greeting_generic') // 'Outside.\nhello!\n'
+template.some('greeting_personalized', {name: 'world'}) // 'Outside.\n\nhello world!'
+template.some([{name: 'greeting_personalized', context: {name: 'world'}}]) // 'Outside.\n\nhello world!'
+template.some(['greeting_generic', {name: 'greeting_personalized', context: {name: 'world'}}]) // 'Outside.\nhello!\nhello world!'
+```
+
+
+
+
+
+## Examples
+
+Here are some examples
+
+### Express
 
 ```html
 <!-- templates/layout.html -->

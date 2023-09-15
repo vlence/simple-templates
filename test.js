@@ -50,6 +50,25 @@ assert.equal(template.render(), 'one two')
 assert.equal(template.render('ONE'), 'one')
 assert.equal(template.render('TWO'), 'two')
 
+template = compile(`Outside.
+{{template greeting_generic}}hello!{{/template}}
+{{template greeting_personalized}}hello {{name}}!{{/template}}`)
+
+assert.equal(template.only('greeting_generic'), 'hello!')
+assert.equal(template.only({name: 'greeting_personalized', context: {name: 'world'}}), 'hello world!')
+assert.equal(template.only('greeting_generic', {name: 'greeting_personalized', context: {name: 'world'}}), 'hello!hello world!')
+
+assert.equal(template.except('greeting_personalized'), 'Outside.\nhello!\n')
+assert.equal(template.except(['greeting_personalized']), 'Outside.\nhello!\n')
+assert.equal(template.except(['greeting_personalized', 'greeting_generic']), 'Outside.\n\n')
+assert.equal(template.except('greeting_generic', {name: 'world'}), 'Outside.\n\nhello world!')
+assert.equal(template.except(['greeting_generic'], {name: 'world'}), 'Outside.\n\nhello world!')
+
+assert.equal(template.some('greeting_generic'), 'Outside.\nhello!\n')
+assert.equal(template.some('greeting_personalized', {name: 'world'}), 'Outside.\n\nhello world!')
+assert.equal(template.some([{name: 'greeting_personalized', context: {name: 'world'}}]), 'Outside.\n\nhello world!')
+assert.equal(template.some(['greeting_generic', {name: 'greeting_personalized', context: {name: 'world'}}]), 'Outside.\nhello!\nhello world!')
+
 
 
 // putting it all together

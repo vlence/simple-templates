@@ -1,4 +1,18 @@
 /**
+ * 
+ * @typedef {Object} TemplateArgument
+ * @property {string} name The name of the template
+ * @property {any} context The context of the template
+ */
+
+/**
+ * @typedef {Object} Token
+ * @property {string} type The type of token
+ * @property {string} value The value of the token
+ */
+
+
+/**
  * A compiled template. Templates can be rendered into strings.
  * 
  * @example
@@ -11,19 +25,25 @@
  */
 class Template {
     constructor(name = '__ROOT__') {
+        /**
+         * @readonly
+         */
         this.name = name
 
         /**
-         * @type {{type: string; value: string|Template;}[]}
+         * @private
+         * @type {Token[]}
          */
         this._tokens = []
 
         /**
+         * @private
          * @type {{[name: string]: Template;}}
          */
         this._templates_map = {}
 
         /**
+         * @private
          * @type {Template[]}
          */
         this._templates_list = []
@@ -53,7 +73,7 @@ class Template {
      * @param {Template} t A template
      */
     add_template(t) {
-        this._tokens.push({type: 'Template', value: t})
+        this._tokens.push({type: 'Template', value: t.name})
         this._templates_map[t.name] = t
         this._templates_list.push(t)
     }
@@ -93,11 +113,190 @@ class Template {
     }
 
     /**
+     * Render only some templates inside this template.
+     * 
+     * @example
+     * ```javascript
+     * const templateString = `
+     * This is outside all other templates. Notice this text never gets rendered
+     * when you use only().
+     * 
+     * {{template greeting_generic}} hello! {{/template}}
+     * {{template greeting_personalized}} hello {{name}}! {{/template}}
+     * `
+     * 
+     * const template = compile(templateString)
+     * 
+     * console.log(template.only('greeting_generic')) // hello!
+     * console.log(template.only({name: 'greeting_personalized', context: {name: 'world'}})) // hello world!
+     * console.log(template.only('greeting_generic', {name: 'greeting_personalized', context: {name: 'world'}})) // hello! hello world!
+     * ```
+     * 
+     * @param {(string|TemplateArgument)[]} list The list of templates to render
+     * 
+     * @returns {string} The rendered templates
+     */
+    only(...list) {
+        let output = ''
+
+        if (list.length == 0) {
+            return output
+        }
+
+
+        for (const t of this._templates_list) {
+            for (const item of list) {
+                const itemType = typeof item == 'string' ? 'string' : 'TemplateArgument'
+                const name = itemType == 'string' ? item : item.name
+
+                if (t.name === name) {
+                    output += t.render(item.context)
+                }
+            }
+        }
+        
+        return output
+    }
+
+    /**
+     * Render everything in this template except some templates
+     * 
+     * @example
+     * ```javascript
+     * const templateString = `
+     * This is outside all other templates. Notice this text never gets rendered
+     * when you use only().
+     * 
+     * {{template greeting_generic}} hello! {{/template}}
+     * {{template greeting_personalized}} hello {{name}}! {{/template}}
+     * `
+     * 
+     * const template = compile(templateString)
+     * 
+     * console.log(template.only('greeting_generic')) // hello!
+     * console.log(template.only({name: 'greeting_personalized', context: {name: 'world'}})) // hello world!
+     * console.log(template.only('greeting_generic', {name: 'greeting_personalized', context: {name: 'world'}})) // hello! hello world!
+     * ```
+     * 
+     * @param {string|string[]} nameOrList The list of templates to render
+     * 
+     * @returns {string} The rendered templates
+     */
+    except(nameOrList, context = {}) {
+        let output = ''
+        const isList = Array.isArray(nameOrList)
+
+        if (isList && nameOrList.length == 0) {
+            return output
+        }
+
+
+        token_loop: for (const token of this._tokens) {
+            if (token.type == 'Template') {
+                if (!isList) {
+                    if (token.value === nameOrList) {
+                        continue token_loop
+                    }
+                }
+                
+                for (const name of nameOrList) {
+                    if (token.value === name) {
+                        continue token_loop
+                    }
+                }
+            }
+
+            output += this._render_token(token, context)
+        }
+        
+        return output
+    }
+
+    /**
+     * Render some of the templates, and everything outside them, in this template.
+     * 
+     * @example
+     * ```javascript
+     * 
+     * ```
+     * 
+     * @param {string|Array<string|TemplateArgument>} nameOrList The list of templates to render
+     * @param {any} context The rendering context for expression blocks outside the list of templates to render
+     * 
+     * @returns {string} The rendered templates
+     */
+    some(nameOrList, context = {}) {
+        let output = ''
+
+        const isList = Array.isArray(nameOrList)
+
+        if (isList && nameOrList.length == 0) {
+            return output
+        }
+
+        token_loop: for (const token of this._tokens) {
+            if (token.type == 'Template') {
+                if (isList) {
+                    for (const item of nameOrList) {
+                        const itemType = typeof item == 'string' ? 'string' : 'TemplateArgument'
+                        const name = itemType == 'string' ? item : item.name
+                        
+                        if (token.value === name) {
+                            output += this._render_token(token, item.context || context)
+                            continue token_loop
+                        }
+                    }
+                }
+
+                if (token.value !== nameOrList) {
+                    continue
+                }
+            }
+
+            output += this._render_token(token, context)
+        }
+        
+        return output
+    }
+
+    /**
+     * 
+     * @param {Token} token The token to render
+     * @param {any} context The rendering context
+     */
+    _render_token(token, context) {
+        switch (token.type) {
+            case 'String':
+                return token.value
+                
+            case 'Expression':
+                const expr = context[token.value]
+                
+                // don't render undefined and null
+                if (expr === undefined || expr === null) {
+                    return ''
+                }
+
+                return expr
+                
+            case 'Template':
+                const template = this._find(token.value)
+
+                if (template) {
+                    return template.render(context)
+                }
+        }
+    }
+
+    /**
      * Render the template with the given name.
+     * 
+     * @private
      * 
      * @param {string} name The name of the template
      * @param {any} context The rendering context
-     * @returns {string}
+     * 
+     * @returns {string} The rendered template
      */
     _render_template(name, context) {
         const template = this._find(name)
@@ -112,32 +311,17 @@ class Template {
     /**
      * Render this template with the given context.
      * 
+     * @private
+     * 
      * @param {any} context The rendering context
-     * @returns {string}
+     * 
+     * @returns {string} The rendered template
      */
     _render(context) {
         let output = ''
         
-        for (let i = 0; i < this._tokens.length; i++) {
-            const token = this._tokens[i]
-
-            switch (token.type) {
-                case 'String':
-                    output += token.value
-                    break
-                case 'Template':
-                    output += token.value.render(context)
-                    break
-                case 'Expression':
-                    const expr = context[token.value]
-                    
-                    // don't render undefined and null
-                    if (expr !== undefined && expr !== null) {
-                        output += expr
-                    }
-
-                    break
-            }
+        for (const token of this._tokens) {
+            output += this._render_token(token, context)
         }
 
         return output
@@ -146,8 +330,11 @@ class Template {
     /**
      * Finds the template with the given name.
      * 
+     * @private
+     * 
      * @param {string} name Name of the template
-     * @returns {Template|undefined}
+     * 
+     * @returns {Template|undefined} The template or `undefined`
      */
     _find(name) {
         if (this.name === name) {
